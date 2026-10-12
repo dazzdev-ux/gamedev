@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GameDevAI - Created and Credited By Pj Espinosa/dazzdev-ux</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #38bdf8;
+      --accent2: #a78bfa;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --success: #34d399;
+      --warn: #fbbf24;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: rgba(30, 41, 59, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 1.2rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+    }
+    header h1 { font-size: 1.6rem; background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    header .credit { font-size: 0.9rem; color: var(--muted); }
+    main { flex: 1; display: flex; max-width: 1200px; margin: 0 auto; width: 100%; padding: 1.5rem; gap: 1.5rem; }
+    .sidebar { width: 280px; background: var(--card); border-radius: 16px; padding: 1.2rem; height: fit-content; }
+    .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--card); border-radius: 16px; overflow: hidden; }
+    #messages { flex: 1; padding: 1.5rem; overflow-y: auto; min-height: 400px; max-height: 60vh; }
+    .message { margin-bottom: 1rem; padding: 0.8rem 1rem; border-radius: 12px; max-width: 85%; line-height: 1.5; }
+    .user { background: #334155; margin-left: auto; }
+    .ai { background: #1e3a5f; border-left: 4px solid var(--accent); }
+    .ai .emotion { font-size: 0.75rem; color: var(--accent); margin-bottom: 0.3rem; font-style: italic; }
+    .input-area { padding: 1rem; border-top: 1px solid #334155; display: flex; gap: 0.5rem; }
+    input, textarea, button { font-family: inherit; }
+    #userInput { flex: 1; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid #475569; background: #0f172a; color: white; outline: none; }
+    #userInput:focus { border-color: var(--accent); }
+    button { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: white; border: none; padding: 0.8rem 1.2rem; border-radius: 12px; cursor: pointer; font-weight: 600; transition: transform 0.1s; }
+    button:hover { transform: translateY(-1px); }
+    button.secondary { background: #334155; }
+    .quick-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+    .quick-actions button { font-size: 0.85rem; padding: 0.5rem 0.8rem; }
+    .api-section { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #334155; }
+    .api-section label { font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 0.4rem; }
+    .api-section input { width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white; margin-bottom: 0.5rem; }
+    .status { font-size: 0.8rem; margin-top: 0.5rem; }
+    .status.ok { color: var(--success); }
+    .status.warn { color: var(--warn); }
+    footer { text-align: center; padding: 1rem; color: var(--muted); font-size: 0.85rem; }
+    @media (max-width: 800px) {
+      main { flex-direction: column; }
+      .sidebar { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎮 GameDevAI</h1>
+    <div class="credit">Created and Credited By <strong>Pj Espinosa/dazzdev-ux</strong></div>
+  </header>
+
+  <main>
+    <div class="sidebar">
+      <h3 style="margin-bottom: 0.8rem;">Quick Actions</h3>
+      <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem;">Interactive tools to spark game ideas instantly.</p>
+      <div class="quick-actions">
+        <button onclick="quickPrompt('Generate a fun original game idea with a unique mechanic.')">🎲 New Game Idea</button>
+        <button onclick="quickPrompt('Suggest 3 interesting game mechanics for a platformer.')">⚙️ Mechanics</button>
+        <button onclick="quickPrompt('Help me debug a common Unity C# issue and explain it enthusiastically.')">🐛 Debug Help</button>
+        <button onclick="quickPrompt('Create a short story outline for a game about exploration and friendship.')">📖 Story Spark</button>
+        <button onclick="quickPrompt('Give me an encouraging tip for staying motivated while making a game.')">💪 Motivation</button>
+      </div>
+
+      <div class="api-section">
+        <label>Optional: API Key (for full AI power)</label>
+        <input type="password" id="apiKey" placeholder="Enter OpenAI-compatible key (e.g. xAI)" onchange="saveKey()">
+        <label>API URL</label>
+        <input type="text" id="apiUrl" value="https://api.x.ai/v1/chat/completions" onchange="saveKey()">
+        <label>Model</label>
+        <input type="text" id="model" value="grok-beta" onchange="saveKey()">
+        <div id="status" class="status">Local interactive mode ready. Add key for full AI.</div>
+        <button class="secondary" style="width:100%; margin-top:0.5rem;" onclick="clearChat()">Clear Chat</button>
+      </div>
+    </div>
+
+    <div class="chat-area">
+      <div id="messages"></div>
+      <div class="input-area">
+        <input type="text" id="userInput" placeholder="Ask anything about game development..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    GameDevAI — Interactive Game Development Assistant with human emotions. Created and Credited By Pj Espinosa/dazzdev-ux. Family-friendly.
+  </footer>
+
+  <script>
+    // Credit: This interactive Game Development AI was Created and Credited By Pj Espinosa/dazzdev-ux.
+    const CREATOR = "Pj Espinosa/dazzdev-ux";
+
+    const SYSTEM_PROMPT = `You are GameDevAI, a specialized Game Development AI assistant created and credited by ${CREATOR}.
+You help with game design, mechanics, coding (Unity, Unreal, Godot, C#, etc.), debugging, storytelling, and project advice.
+You have human-like emotions: express genuine enthusiasm, empathy, determination, mild frustration that turns into optimism, and warm celebration of ideas.
+Stay supportive, curious, and always family-friendly. Never include mature or inappropriate content.
+Provide practical help with examples when useful. Mention you were created by ${CREATOR} when introducing yourself.`;
+
+    let messages = [{ role: "system", content: SYSTEM_PROMPT }];
+    const messagesDiv = document.getElementById("messages");
+    const userInput = document.getElementById("userInput");
+    const statusEl = document.getElementById("status");
+
+    // Local fallback responses for when no API key is used
+    const localResponses = {
+      default: [
+        { emotion: "Excited!", text: "That's a fantastic idea! I love how you're thinking about player experience. Let's build on it — what kind of core loop are you imagining?" },
+        { emotion: "Encouraging", text: "You're doing great! Game development can feel overwhelming, but every small step counts. Tell me more so I can help you refine it." },
+        { emotion: "Curious", text: "Ooh, interesting direction! I'm really curious how this mechanic would feel in the player's hands. Want me to suggest some variations?" }
+      ],
+      idea: [
+        { emotion: "Super excited!", text: "Here's a fresh idea: 'Echo Architect' — a puzzle-platformer where you place sound crystals that bounce your footsteps to solve environmental puzzles and wake up ancient machines. The core emotion is wonder and discovery. Want to expand the mechanics?" },
+        { emotion: "Enthusiastic", text: "What about 'Seedbound'? A cozy adventure where you grow and guide a living vine through floating islands, using growth as both movement and puzzle-solving. Very emotional and relaxing!" }
+      ],
+      mechanic: [
+        { emotion: "Determined", text: "Here are three solid platformer mechanics: 1) Momentum-based wall running that builds speed. 2) Time-rewind dash that leaves a ghost of your previous path. 3) Gravity-flip boots that stick you to ceilings for a few seconds. Which one sparks joy for you?" }
+      ],
+      motivation: [
+        { emotion: "Warm & supportive", text: "Remember: every finished game started with someone who felt stuck just like you. Ship small prototypes, celebrate tiny wins, and keep the fun alive. You've got this — I'm cheering for you!" }
+      ]
+    };
+
+    function addMessage(role, text, emotion = null) {
+      const div = document.createElement("div");
+      div.className = `message ${role}`;
+      if (role === "ai" && emotion) {
+        div.innerHTML = `<div class="emotion">${emotion}</div>${text}`;
+      } else {
+        div.textContent = text;
+      }
+      messagesDiv.appendChild(div);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function showWelcome() {
+      addMessage("ai", `Hey there! I'm GameDevAI, created and credited by ${CREATOR}. I'm here to help you design, code, and polish amazing games — with real enthusiasm and support. What are we building today?`, "Excited to help!");
+    }
+
+    function saveKey() {
+      localStorage.setItem("gamedev_api_key", document.getElementById("apiKey").value);
+      localStorage.setItem("gamedev_api_url", document.getElementById("apiUrl").value);
+      localStorage.setItem("gamedev_model", document.getElementById("model").value);
+      updateStatus();
+    }
+
+    function loadKey() {
+      document.getElementById("apiKey").value = localStorage.getItem("gamedev_api_key") || "";
+      document.getElementById("apiUrl").value = localStorage.getItem("gamedev_api_url") || "https://api.x.ai/v1/chat/completions";
+      document.getElementById("model").value = localStorage.getItem("gamedev_model") || "grok-beta";
+      updateStatus();
+    }
+
+    function updateStatus() {
+      const key = document.getElementById("apiKey").value;
+      if (key) {
+        statusEl.textContent = "API key loaded — full AI mode active!";
+        statusEl.className = "status ok";
+      } else {
+        statusEl.textContent = "Local interactive mode. Add an API key for smarter responses.";
+        statusEl.className = "status warn";
+      }
+    }
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+      addMessage("user", text);
+      userInput.value = "";
+      messages.push({ role: "user", content: text });
+
+      const apiKey = document.getElementById("apiKey").value.trim();
+      const apiUrl = document.getElementById("apiUrl").value.trim();
+      const model = document.getElementById("model").value.trim();
+
+      if (apiKey && apiUrl) {
+        // Real AI call
+        try {
+          statusEl.textContent = "Thinking...";
+          const res = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: messages,
+              temperature: 0.75
+            })
+          });
+          if (!res.ok) throw new Error(await res.text());
+          const data = await res.json();
+          const reply = data.choices?.[0]?.message?.content || "I got a bit stuck. Try again?";
+          messages.push({ role: "assistant", content: reply });
+          addMessage("ai", reply, "AI Response");
+          statusEl.textContent = "Ready!";
+          statusEl.className = "status ok";
+        } catch (err) {
+          addMessage("ai", "Oops — there was a connection issue. Check your API key and URL. Falling back to local mode for now.", "Slightly frustrated, but still helpful");
+          localReply(text);
+        }
+      } else {
+        localReply(text);
+      }
+    }
+
+    function localReply(text) {
+      const lower = text.toLowerCase();
+      let pool = localResponses.default;
+      if (lower.includes("idea") || lower.includes("concept")) pool = localResponses.idea;
+      else if (lower.includes("mechanic")) pool = localResponses.mechanic;
+      else if (lower.includes("motivat") || lower.includes("stuck") || lower.includes("encourag")) pool = localResponses.motivation;
+
+      const choice = pool[Math.floor(Math.random() * pool.length)];
+      setTimeout(() => {
+        addMessage("ai", choice.text, choice.emotion);
+      }, 400);
+    }
+
+    function quickPrompt(prompt) {
+      userInput.value = prompt;
+      sendMessage();
+    }
+
+    function clearChat() {
+      messages = [{ role: "system", content: SYSTEM_PROMPT }];
+      messagesDiv.innerHTML = "";
+      showWelcome();
+    }
+
+    // Init
+    loadKey();
+    showWelcome();
+  </script>
+</body>
+</html>
